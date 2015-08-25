@@ -6,6 +6,9 @@ export default class EntitySchema {
 
     this._idAttribute = options.idAttribute || 'id';
     this._key = key;
+    if(options.typeAttribute) {
+      this._typeAttribute = options.typeAttribute;
+    }
   }
 
   getKey() {
@@ -14,6 +17,10 @@ export default class EntitySchema {
 
   getIdAttribute() {
     return this._idAttribute;
+  }
+
+  getTypeAttribute() {
+    return this._typeAttribute;
   }
 
   define(nestedSchema) {

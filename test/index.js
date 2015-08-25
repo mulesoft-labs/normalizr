@@ -4,7 +4,8 @@ var should = require('chai').should(),
     normalizr = require('../src'),
     normalize = normalizr.normalize,
     Schema = normalizr.Schema,
-    arrayOf = normalizr.arrayOf;
+    arrayOf = normalizr.arrayOf,
+    arrayOfPolymorphic = normalizr.arrayOfPolymorphic;
 
 describe('normalizr', function () {
   it('fails creating nameless schema', function () {
@@ -343,6 +344,71 @@ describe('normalizr', function () {
           120: {
             id: 120,
             name: 'Ada Lovelace'
+          }
+        }
+      }
+    });
+  });
+
+  it('can normalize a polymorphic array', function () {
+    var media = new Schema('media', { typeAttribute: 'type' }),
+        blogPost = new Schema('blogPosts'),
+        article = new Schema('articles'),
+        entityMap,
+        input;
+
+    entityMap = {
+      blogPost: blogPost,
+      article: article
+    };
+
+    input = [{
+      id: 1,
+      type: 'article',
+      title: 'Some Article'
+    }, {
+      id: 2,
+      type: 'blogPost',
+      title: 'Some Blog Post'
+    }, {
+      id: 3,
+      type: 'article',
+      title: 'Other Article'
+    }];
+
+    Object.freeze(input);
+
+    const normalized = normalize(input, arrayOfPolymorphic(media, entityMap));
+
+    normalize(input, arrayOfPolymorphic(media, entityMap)).should.eql({
+      result: [{
+        type: 'article',
+        id: 1
+      }, {
+        type: 'blogPost',
+        id: 2
+      }, {
+        type: 'article',
+        id: 3
+      }],
+      entities: {
+        articles: {
+          1: {
+            id: 1,
+            type: 'article',
+            title: 'Some Article'
+          },
+          3: {
+            id: 3,
+            type: 'article',
+            title: 'Other Article'
+          }
+        },
+        blogPosts: {
+          2: {
+            id: 2,
+            type: 'blogPost',
+            title: 'Some Blog Post'
           }
         }
       }

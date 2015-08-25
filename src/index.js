@@ -1,5 +1,6 @@
 import EntitySchema from './EntitySchema';
 import ArraySchema from './ArraySchema';
+import PolymorphicSchema from './PolymorphicSchema';
 import isObject from 'lodash/lang/isObject';
 import isEqual from 'lodash/lang/isEqual';
 
@@ -26,6 +27,20 @@ function visitArray(obj, arraySchema, bag, options) {
   const normalized = obj.map(childObj =>
     visit(childObj, itemSchema, bag, options)
   );
+  return normalized;
+}
+
+function visitPolymorphic(obj, polymorphicSchema, bag, options) {
+  const baseSchema = polymorphicSchema.getBaseSchema();
+  const entityMap = polymorphicSchema.getEntityMap();
+  const typeAttribute = baseSchema.getTypeAttribute();
+
+  const normalized = obj.map(childObj => {
+    const type = childObj[typeAttribute];
+    const itemSchema = entityMap[type];
+
+    return { type, id: visit(childObj, itemSchema, bag, options) };
+  });
   return normalized;
 }
 
@@ -77,6 +92,8 @@ function visit(obj, schema, bag, options) {
     return visitEntity(obj, schema, bag, options);
   } else if (schema instanceof ArraySchema) {
     return visitArray(obj, schema, bag, options);
+  } else if (schema instanceof PolymorphicSchema) {
+    return visitPolymorphic(obj, schema, bag, options);
   } else {
     return visitObject(obj, schema, bag, options);
   }
@@ -84,6 +101,10 @@ function visit(obj, schema, bag, options) {
 
 export function arrayOf(schema) {
   return new ArraySchema(schema);
+}
+
+export function arrayOfPolymorphic(schema, map) {
+  return new PolymorphicSchema(schema, map);
 }
 
 export { EntitySchema as Schema };
